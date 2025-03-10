@@ -8,6 +8,9 @@ CONFPATH := $(KPATH)
 MAKEFILE_VERSION := 1.15
 include $(KPATH)/Makefile.kcommon
 
+QEMU_CPU := cortex-m4
+QEMU_BOARD := netduinoplus2
+
 ##
 ## List here your source files (both .s, .c and .cpp)
 ##
@@ -46,5 +49,19 @@ main: $(OBJ) all-recursive
 
 clean: clean-recursive
 	$(Q)rm -f $(OBJ) $(OBJ:.o=.d) main.elf main.hex main.bin main.map
+
+.PHONY: qemu gdb
+
+qemu: main.bin
+	qemu-system-arm \
+		-cpu $(QEMU_CPU) \
+		-machine $(QEMU_BOARD) \
+		-nographic \
+		-device loader,file=main.bin,addr=0x08000000,force-raw=on \
+		-gdb tcp::1234 \
+		-S \
+
+gdb:
+	gdb-multiarch --command gdbcmds.txt main.elf
 
 -include $(OBJ:.o=.d)
